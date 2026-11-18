@@ -21,7 +21,8 @@ foreach ($arch in $targets.Keys) {
     $target = $targets[$arch]
     Write-Host "== Building $arch ($target)"
     rustup target add $target
-    cargo build --release --target $target
+    # --locked: use exactly the dependency versions recorded in Cargo.lock.
+    cargo build --release --locked --target $target
     if ($LASTEXITCODE -ne 0) { Write-Host "Build failed for $arch"; exit 1 }
     Copy-Item "target\$target\release\SparkyPDF.exe" (Join-Path $dist "SparkyPDF-$arch.exe")
 }

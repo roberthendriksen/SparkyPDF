@@ -18,7 +18,12 @@ jobs:
   release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
+      # Third-party steps are pinned to an exact commit, so a re-pointed version tag
+      # cannot change what runs here. The comment names the version behind the commit.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Do not leave the repository's access token on disk for the build to find.
+          persist-credentials: false
 
       - name: Check that the tag matches the version in Cargo.toml
         if: startsWith(github.ref, 'refs/tags/v')
@@ -29,15 +34,22 @@ jobs:
             throw "Tag ${{ github.ref_name }} does not match version $version in Cargo.toml"
           }
 
+      # --locked: use exactly the dependency versions recorded in Cargo.lock.
       - name: Run the tests
-        run: cargo test
+        run: cargo test --locked
 
-      - name: Install Inno Setup
+      # Inno Setup comes with GitHub's build machine. Nothing is downloaded here on
+      # purpose; if it ever goes missing, add an install step pinned to one version.
+      - name: Check Inno Setup
         shell: pwsh
         run: |
-          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe")) {
-            choco install innosetup --no-progress -y
-            if ($LASTEXITCODE -ne 0) { throw "Inno Setup could not be installed" }
+          $iscc = Get-Item "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          if (-not $iscc) { throw "Inno Setup is not installed on this build machine" }
+          $info = $iscc.VersionInfo
+          Write-Host "Inno Setup $($info.ProductVersion) at $($iscc.FullName)"
+          if ($info.FileMajorPart -lt 6 -or ($info.FileMajorPart -eq 6 -and $info.FileMinorPart -lt 3)) {
+            throw "Inno Setup 6.3 or newer is needed"
           }
 
       - name: Build the programs and the installer
@@ -80,7 +92,7 @@ jobs:
           if (Test-Path $class) { throw "The PDF registration is still there after uninstalling" }
           Write-Host "Uninstalled cleanly"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: SparkyPDF
           path: dist/*
@@ -91,6 +103,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release create "${{ github.ref_name }}" (Get-ChildItem dist).FullName `
             --title "Sparky PDF ${{ github.ref_name }}" `

@@ -55,6 +55,9 @@ and start it. `SHA256SUMS.txt` lists the checksums.
 The downloads are not code-signed, so Windows may show "Windows protected your
 PC" the first time. Choose **More info**, then **Run anyway**.
 
+That release page is the only official source of Sparky PDF. [SECURITY.md](SECURITY.md)
+explains how to check a download and how to report a security problem.
+
 ### Building it yourself
 
 You need [Rust](https://rustup.rs) with the MSVC toolchain and the Visual
