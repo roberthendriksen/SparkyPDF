@@ -10,3 +10,5 @@
 Sparky PDF needs the WebView2 Runtime, which Windows 11 already includes.
 
 The files are not code-signed, so Windows may show "Windows protected your PC" the first time. Choose **More info**, then **Run anyway**.
+
+[SECURITY.md](https://github.com/roberthendriksen/SparkyPDF/blob/main/SECURITY.md) explains how to check that a download really was built from this repository.

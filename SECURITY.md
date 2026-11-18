@@ -15,6 +15,14 @@ PowerShell and compare the result with the line for that file:
 Get-FileHash .\SparkyPDF-Setup.exe -Algorithm SHA256
 ```
 
+Releases from 1.0.1 on also carry a build attestation: a record, signed by
+GitHub, that the file was built by this repository's workflow. With the
+[GitHub CLI](https://cli.github.com) installed:
+
+```
+gh attestation verify .\SparkyPDF-Setup.exe --repo roberthendriksen/SparkyPDF
+```
+
 The files are not code-signed, so Windows shows the publisher as unknown.
 
 ## Reporting a security problem
