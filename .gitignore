@@ -1,0 +1,8 @@
+# Build output
+/target/
+
+# The built program is published through GitHub Releases, not kept in the repo
+/SparkyPDF.exe
+
+# Documents used for local testing never belong in the repo
+*.pdf
