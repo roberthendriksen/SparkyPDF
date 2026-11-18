@@ -1,0 +1,98 @@
+name: Release
+
+# Builds the downloads for a version: the ARM64 and x64 programs, the installer and
+# the checksums. The installer is test-installed and uninstalled on the build machine.
+#
+# Pushing a version tag such as v1.0.0 publishes the files as a GitHub release.
+# Starting the workflow by hand from the Actions tab builds and tests everything
+# without publishing.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check that the tag matches the version in Cargo.toml
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            throw "Tag ${{ github.ref_name }} does not match version $version in Cargo.toml"
+          }
+
+      - name: Run the tests
+        run: cargo test
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup could not be installed" }
+          }
+
+      - name: Build the programs and the installer
+        shell: pwsh
+        run: |
+          ./scripts/build-release.ps1
+          if ($LASTEXITCODE -ne 0) { throw "The release build failed" }
+          foreach ($file in 'SparkyPDF-arm64.exe', 'SparkyPDF-x64.exe', 'SparkyPDF-Setup.exe', 'SHA256SUMS.txt') {
+            if (-not (Test-Path "dist/$file")) { throw "$file was not built" }
+          }
+
+      - name: Test the installer (install, check, uninstall)
+        shell: pwsh
+        run: |
+          $silent = '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'
+          $folder = "$env:LOCALAPPDATA\Programs\Sparky PDF"
+          $program = "$folder\SparkyPDF.exe"
+          $shortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Sparky PDF.lnk"
+          $class = 'HKCU:\Software\Classes\SparkyPDF.Document'
+
+          $setup = Start-Process dist\SparkyPDF-Setup.exe -ArgumentList $silent -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw "The installer ended with exit code $($setup.ExitCode)" }
+          if (-not (Test-Path $program)) { throw "The program was not installed to $program" }
+          if (-not (Test-Path $shortcut)) { throw "No Start menu entry was created" }
+
+          $command = (Get-ItemProperty "$class\shell\open\command").'(default)'
+          if ($command -ne "`"$program`" `"%1`"") { throw "Not registered as a PDF app. Open command: $command" }
+
+          $installed = (Get-FileHash $program -Algorithm SHA256).Hash
+          $expected = (Get-FileHash dist\SparkyPDF-x64.exe -Algorithm SHA256).Hash
+          if ($installed -ne $expected) { throw "The installer did not pick the x64 program on this x64 machine" }
+          Write-Host "Installed and registered: $command"
+
+          Start-Process "$folder\unins000.exe" -ArgumentList $silent -Wait
+          # The uninstaller hands over to a temporary copy of itself, so wait for the result.
+          $deadline = (Get-Date).AddSeconds(60)
+          while ((Test-Path $folder) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+          if (Test-Path $folder) { throw "The program folder is still there after uninstalling" }
+          if (Test-Path $shortcut) { throw "The Start menu entry is still there after uninstalling" }
+          if (Test-Path $class) { throw "The PDF registration is still there after uninstalling" }
+          Write-Host "Uninstalled cleanly"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SparkyPDF
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" (Get-ChildItem dist).FullName `
+            --title "Sparky PDF ${{ github.ref_name }}" `
+            --notes-file installer/release-notes.md `
+            --generate-notes

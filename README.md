@@ -45,11 +45,12 @@ Download from the
 
 | File | For |
 | --- | --- |
-| `SparkyPDF-arm64.exe` | Windows on ARM |
-| `SparkyPDF-x64.exe` | Ordinary 64-bit PCs |
+| `SparkyPDF-Setup.exe` | Most people. Installer for any 64-bit Windows 10 or 11 PC, ARM or not. Installs for your account only, adds a Start menu entry, and can be removed again from Windows Settings. |
+| `SparkyPDF-arm64.exe` | Portable program for Windows on ARM |
+| `SparkyPDF-x64.exe` | Portable program for ordinary 64-bit PCs |
 
-Each is the whole program in a single file: put it anywhere and start it.
-`SHA256SUMS.txt` lists the checksums.
+A portable program is the whole of Sparky PDF in a single file: put it anywhere
+and start it. `SHA256SUMS.txt` lists the checksums.
 
 The downloads are not code-signed, so Windows may show "Windows protected your
 PC" the first time. Choose **More info**, then **Run anyway**.
@@ -139,6 +140,11 @@ the WebView2 profile folder. Nothing is sent anywhere.
 | `assets/make-icon.ps1` | Rebuilds `assets/icon.ico` from the icon artwork |
 | `scripts/build-release.ps1` | Builds the release files into `dist\` |
 | `installer/SparkyPDF.iss` | Inno Setup script for the installer |
+| `.github/workflows/release.yml` | Builds, tests and publishes the downloads when a version tag is pushed |
+
+To publish a new version: change `version` in `Cargo.toml`, commit, then push a
+matching tag such as `v1.0.1`. GitHub builds the programs and the installer,
+test-installs it, and attaches everything to a new release.
 
 Run the tests with `cargo test`. Debug builds accept
 `SPARKYPDF_TEST_CMD=<command>` (for example `print` or `recover`) to run one

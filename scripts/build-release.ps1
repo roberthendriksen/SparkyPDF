@@ -26,11 +26,11 @@ foreach ($arch in $targets.Keys) {
     Copy-Item "target\$target\release\SparkyPDF.exe" (Join-Path $dist "SparkyPDF-$arch.exe")
 }
 
-$iscc = @(
-    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-    "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
-    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
+$iscc = Get-ChildItem -ErrorAction SilentlyContinue -Path @(
+    "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup *\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup *\ISCC.exe"
+) | Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
 if (-not $iscc) { $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source }
 
 if ($SkipInstaller) {
