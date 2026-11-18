@@ -27,11 +27,11 @@ window, a list of recent files, and help for files that will not open.
 
 This is an early version, built and used on Windows 11 on ARM64.
 
-Tested by hand: opening healthy and damaged PDFs, the recovery view, printing,
-full screen, closing a file, and registering as a PDF app.
-Not exercised yet: dropping a file on the window and clicking links inside a
-PDF. The x64 program has only been run under emulation on an ARM64 PC, not on
-an x64 machine.
+Tested by hand: opening healthy and damaged PDFs, the recovery view, dropping
+files on the window, links inside a PDF, printing, full screen, closing a
+file, and registering as a PDF app.
+The x64 program has only been run under emulation on an ARM64 PC, not on an
+x64 machine.
 
 ## Requirements
 
@@ -152,7 +152,8 @@ test-installs it, and attaches everything to a new release.
 Run the tests with `cargo test`. Debug builds accept
 `SPARKYPDF_TEST_CMD=<command>` (for example `print` or `recover`) to run one
 menu command a few seconds after start, which allows testing without sending
-keystrokes to the desktop.
+keystrokes to the desktop. With `SPARKYPDF_TEST_LOG=<file>` set, a debug build
+writes down the links it would open instead of starting the browser.
 
 Sparky PDF is written in Rust on top of
 [tao](https://github.com/tauri-apps/tao),

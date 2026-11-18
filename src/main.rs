@@ -674,6 +674,16 @@ fn watch_shortcuts(webview: &WebView, proxy: EventLoopProxy<Cmd>, fullscreen: Rc
 
 /// Opens a web link or a Settings page with whatever Windows uses for it.
 fn shell_open(target: &str) {
+    // Debug builds only: with SPARKYPDF_TEST_LOG set, write down what would be opened
+    // instead of opening it, so link handling can be tested without starting a browser.
+    #[cfg(debug_assertions)]
+    if let Some(log) = std::env::var_os("SPARKYPDF_TEST_LOG") {
+        use std::io::Write;
+        if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(log) {
+            let _ = writeln!(file, "{target}");
+        }
+        return;
+    }
     unsafe {
         ShellExecuteW(
             None,
