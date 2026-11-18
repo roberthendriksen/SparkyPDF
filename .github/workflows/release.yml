@@ -46,11 +46,11 @@ jobs:
           $iscc = Get-Item "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue |
             Select-Object -First 1
           if (-not $iscc) { throw "Inno Setup is not installed on this build machine" }
-          $info = $iscc.VersionInfo
-          Write-Host "Inno Setup $($info.ProductVersion) at $($iscc.FullName)"
-          if ($info.FileMajorPart -lt 6 -or ($info.FileMajorPart -eq 6 -and $info.FileMinorPart -lt 3)) {
-            throw "Inno Setup 6.3 or newer is needed"
-          }
+          # For the build log only. A copy that is too old (before 6.3) fails later, when
+          # it compiles the installer script.
+          $installed = Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup*' -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+          Write-Host "Inno Setup $($installed.DisplayVersion) at $($iscc.FullName)"
 
       - name: Build the programs and the installer
         shell: pwsh
