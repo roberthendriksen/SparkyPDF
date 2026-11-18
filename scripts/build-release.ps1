@@ -46,7 +46,8 @@ if ($SkipInstaller) {
 $sums = Get-ChildItem $dist -Filter *.exe | Sort-Object Name | ForEach-Object {
     "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)"
 }
-[System.IO.File]::WriteAllLines((Join-Path $dist 'SHA256SUMS.txt'), [string[]]$sums)
+# Unix line endings, so that `sha256sum -c SHA256SUMS.txt` accepts the file.
+[System.IO.File]::WriteAllText((Join-Path $dist 'SHA256SUMS.txt'), (($sums -join "`n") + "`n"))
 
 Write-Host "== Sparky PDF $version"
 Get-ChildItem $dist | ForEach-Object { Write-Host ("{0,10:N0} bytes  {1}" -f $_.Length, $_.Name) }
