@@ -29,8 +29,9 @@ This is an early version, built and used on Windows 11 on ARM64.
 
 Tested by hand: opening healthy and damaged PDFs, the recovery view, printing,
 full screen, closing a file, and registering as a PDF app.
-Not exercised yet: dropping a file on the window, clicking links inside a PDF,
-and building for x64 (the source is not ARM-specific).
+Not exercised yet: dropping a file on the window and clicking links inside a
+PDF. The x64 program has only been run under emulation on an ARM64 PC, not on
+an x64 machine.
 
 ## Requirements
 
@@ -39,16 +40,35 @@ and building for x64 (the source is not ARM-specific).
 
 ## Getting it
 
-There are no downloads yet. To build it yourself you need
-[Rust](https://rustup.rs) with the MSVC toolchain and the Visual Studio Build
-Tools:
+Download from the
+[latest release](https://github.com/roberthendriksen/SparkyPDF/releases/latest):
+
+| File | For |
+| --- | --- |
+| `SparkyPDF-arm64.exe` | Windows on ARM |
+| `SparkyPDF-x64.exe` | Ordinary 64-bit PCs |
+
+Each is the whole program in a single file: put it anywhere and start it.
+`SHA256SUMS.txt` lists the checksums.
+
+The downloads are not code-signed, so Windows may show "Windows protected your
+PC" the first time. Choose **More info**, then **Run anyway**.
+
+### Building it yourself
+
+You need [Rust](https://rustup.rs) with the MSVC toolchain and the Visual
+Studio Build Tools:
 
 ```
 cargo build --release
 ```
 
-The program is then at `target\release\SparkyPDF.exe`. It is a single file and
-can be copied anywhere.
+The program is then at `target\release\SparkyPDF.exe`.
+
+`scripts\build-release.ps1` builds everything for a release into `dist\`: the
+ARM64 and x64 programs, the checksums and, when
+[Inno Setup](https://jrsoftware.org/isinfo.php) 6.3 or newer is installed, the
+installer described by `installer\SparkyPDF.iss`.
 
 ## Using it
 
@@ -85,6 +105,8 @@ To remove the registration:
 SparkyPDF.exe --unregister
 ```
 
+`--register-quiet` registers without opening Settings; installers use it.
+
 Only your own account is touched (`HKEY_CURRENT_USER`); no administrator rights
 are needed.
 
@@ -115,6 +137,8 @@ the WebView2 profile folder. Nothing is sent anywhere.
 | `src/pages.rs` | The start screen and the report pages |
 | `build.rs` | Embeds the icon and manifest into the program |
 | `assets/make-icon.ps1` | Rebuilds `assets/icon.ico` from the icon artwork |
+| `scripts/build-release.ps1` | Builds the release files into `dist\` |
+| `installer/SparkyPDF.iss` | Inno Setup script for the installer |
 
 Run the tests with `cargo test`. Debug builds accept
 `SPARKYPDF_TEST_CMD=<command>` (for example `print` or `recover`) to run one

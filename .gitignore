@@ -1,5 +1,6 @@
 # Build output
 /target/
+/dist/
 
 # The built program is published through GitHub Releases, not kept in the repo
 /SparkyPDF.exe

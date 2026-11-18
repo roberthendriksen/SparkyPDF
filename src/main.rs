@@ -113,8 +113,10 @@ struct App {
 }
 
 fn main() {
-    // `SparkyPDF.exe --register` and `--unregister` are for installers and scripts:
-    // they add the reader to (or remove it from) Windows' list of PDF apps and exit.
+    // For installers and scripts: add the reader to (or remove it from) Windows' list
+    // of PDF apps and exit. `--register` also opens the Settings page where the user
+    // picks the default; `--register-quiet` does not, and reports failure only through
+    // the exit code.
     match std::env::args_os().nth(1) {
         Some(flag) if flag == "--register" => {
             match register_as_pdf_app() {
@@ -122,6 +124,9 @@ fn main() {
                 Err(error) => fatal(&format!("Could not register {APP} with Windows.\n\n{error}")),
             }
             return;
+        }
+        Some(flag) if flag == "--register-quiet" => {
+            std::process::exit(if register_as_pdf_app().is_ok() { 0 } else { 1 });
         }
         Some(flag) if flag == "--unregister" => return unregister_pdf_app(),
         _ => {}
